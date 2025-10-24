@@ -14,8 +14,8 @@ load_dotenv(BASE_DIR / '.env')
 # SEGURIDAD
 # -------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production-agropredict-2024')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
-
+#DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
@@ -84,11 +84,10 @@ TEMPLATES = [
 # BASE DE DATOS (Railway o local)
 # -------------------------------
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=False,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # -------------------------------
