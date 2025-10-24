@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard - AgroPredict{% endblock %}
+{% block content %}
+
+<!-- Estilos adicionales para los gráficos -->
+<style>
+.chart-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.metric-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2563eb;
+}
+.metric-label {
+    color: #6b7280;
+    margin-top: 5px;
+}
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Dashboard - AgroPredict
+            </h1>
+            <p class="text-muted mb-4">Resumen general de predicciones agrícolas</p>
+        </div>
+    </div>
+
+    <!-- Métricas principales -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-value">{{ total_predicciones }}</div>
+            <div class="metric-label">Total Predicciones</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ predicciones_completadas }}</div>
+            <div class="metric-label">Predicciones Completadas</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ tasa_completado }}%</div>
+            <div class="metric-label">Tasa de Éxito</div>
+        </div>
+        {% if datos_clima %}
+        <div class="metric-card">
+            <div class="metric-value">{{ datos_clima.temperatura }}°C</div>
+            <div class="metric-label">Temperatura Actual</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if total_predicciones > 0 %}
+    <!-- Gráficos principales -->
+    <div class="charts-grid">
+        <!-- Gráfico ROI por tipo de árbol -->
+        <div class="chart-container">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-bar me-2"></i>
+                ROI Promedio por Tipo de Árbol
+            </h5>
+            <canvas id="roiChart" width="400" height="300"></canvas>
+        </div>
+
+        <!-- Gráfico de producción por región -->
+        <div class="chart-container">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                Producción y Superficie por Región
+            </h5>
+            <canvas id="regionChart" width="400" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfico de dispersión -->
+    <div class="chart-container">
+        <h5 class="mb-3">
+            <i class="fas fa-chart-area me-2"></i>
+            Relación Producción vs ROI
+        </h5>
+        <canvas id="scatterChart" width="800" height="400"></canvas>
+    </div>
+
+    <!-- Widget climático mejorado -->
+    {% if datos_clima %}
+    <div class="chart-container">
+        <h5 class="mb-3">
+            <i class="fas fa-cloud-sun me-2"></i>
+            Información Climática - {{ comuna_clima.nombre }}
+        </h5>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="fas fa-thermometer-half fa-2x text-danger mb-2"></i>
+                    <h4>{{ datos_clima.temperatura }}°C</h4>
+                    <p class="text-muted">Temperatura</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="fas fa-tint fa-2x text-info mb-2"></i>
+                    <h4>{{ datos_clima.humedad }}%</h4>
+                    <p class="text-muted">Humedad</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-center">
+                    <i class="fas fa-eye fa-2x text-warning mb-2"></i>
+                    <h5>{{ datos_clima.descripcion }}</h5>
+                    <p class="text-muted">Condiciones actuales</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Predicciones recientes -->
+    <div class="chart-container">
+        <h5 class="mb-3">
+            <i class="fas fa-history me-2"></i>
+            Predicciones Recientes
+        </h5>
+        {% for prediccion in predicciones_recientes %}
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+            <div>
+                <strong>{{ prediccion.tipo_arbol }}</strong> - 
+                {{ prediccion.comuna }}
+                <small class="text-muted">({{ prediccion.hectareas }} ha)</small>
+            </div>
+            <div class="text-end">
+                {% if prediccion.roi_proyectado %}
+                <span class="badge bg-{% if prediccion.roi_proyectado >= 50 %}success{% elif prediccion.roi_proyectado >= 30 %}warning{% else %}danger{% endif %}">
+                    ROI: {{ prediccion.roi_proyectado|floatformat:1 }}%
+                </span>
+                {% endif %}
+                <small class="text-muted d-block">
+                    {{ prediccion.fecha_creacion|date:"d/m/Y" }}
+                </small>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="text-center mt-3">
+            <a href="{% url 'lista_predicciones' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-2"></i>Ver Todas
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Datos del contexto Django
+        const statsArbol = {{ stats_por_arbol|safe }};
+        const statsRegion = {{ stats_por_region|safe }};
+
+        // Configuración de colores
+        const colors = {
+            primary: '#2563eb',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            info: '#06b6d4'
+        };
+
+        // Función para obtener color según ROI
+        function getROIColor(roi) {
+            if (roi >= 50) return colors.success;
+            if (roi >= 30) return colors.warning;
+            return colors.danger;
+        }
+
+        // Gráfico ROI por tipo de árbol
+        const roiCtx = document.getElementById('roiChart').getContext('2d');
+        const roiChart = new Chart(roiCtx, {
+            type: 'bar',
+            data: {
+                labels: statsArbol.map(item => item.tipo_arbol__tipo),
+                datasets: [{
+                    label: 'ROI Promedio (%)',
+                    data: statsArbol.map(item => item.promedio_roi || 0),
+                    backgroundColor: statsArbol.map(item => getROIColor(item.promedio_roi || 0)),
+                    borderColor: statsArbol.map(item => getROIColor(item.promedio_roi || 0)),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'ROI: ' + context.parsed.y.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'ROI (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Tipo de Árbol'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de producción y superficie por región
+        const regionCtx = document.getElementById('regionChart').getContext('2d');
+        const regionChart = new Chart(regionCtx, {
+            type: 'line',
+            data: {
+                labels: statsRegion.map(item => item.comuna__region__nombre),
+                datasets: [{
+                    label: 'Producción Total (ton)',
+                    data: statsRegion.map(item => item.produccion_total || 0),
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary + '20',
+                    yAxisID: 'y'
+                }, {
+                    label: 'Total Hectáreas',
+                    data: statsRegion.map(item => item.total_hectareas || 0),
+                    borderColor: colors.success,
+                    backgroundColor: colors.success + '20',
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Región'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Producción (ton)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Hectáreas'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // Gráfico de dispersión
+        const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+        const scatterChart = new Chart(scatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Tipos de Árbol',
+                    data: statsArbol.map(item => ({
+                        x: item.promedio_produccion || 0,
+                        y: item.promedio_roi || 0,
+                        r: (item.total || 1) * 3 // Tamaño de burbuja
+                    })),
+                    backgroundColor: statsArbol.map(item => getROIColor(item.promedio_roi || 0) + '60'),
+                    borderColor: statsArbol.map(item => getROIColor(item.promedio_roi || 0)),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                const index = context[0].dataIndex;
+                                return statsArbol[index].tipo_arbol__tipo;
+                            },
+                            label: function(context) {
+                                return [
+                                    'Producción: ' + context.parsed.x.toFixed(1) + ' ton/ha',
+                                    'ROI: ' + context.parsed.y.toFixed(1) + '%',
+                                    'Predicciones: ' + statsArbol[context.dataIndex].total
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Producción Promedio (ton/ha)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'ROI Promedio (%)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    
+    {% else %}
+    <!-- Estado vacío -->
+    <div class="text-center py-5">
+        <i class="fas fa-seedling fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay predicciones disponibles</h4>
+        <p class="text-muted mb-4">Comienza creando tu primera predicción agrícola</p>
+        <a href="{% url 'nueva_prediccion' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Crear primera predicción
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

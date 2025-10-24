@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Predicción - AgroPredict{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Nueva Predicción</h2>
+    <p>Complete los datos para generar una predicción de producción agrícola</p>
+</div>
+
+<div class="prediction-layout">
+    <!-- Formulario -->
+    <div class="form-section">
+        <h3>Datos del Cultivo</h3>
+        
+        <form method="post" class="prediction-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.tipo_arbol.id_for_label }}">
+                    {{ form.tipo_arbol.label }}
+                </label>
+                {{ form.tipo_arbol }}
+                {% if form.tipo_arbol.errors %}
+                    <div class="form-errors">
+                        {{ form.tipo_arbol.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.comuna.id_for_label }}">
+                    {{ form.comuna.label }}
+                </label>
+                {{ form.comuna }}
+                {% if form.comuna.errors %}
+                    <div class="form-errors">
+                        {{ form.comuna.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.hectareas.id_for_label }}">
+                    {{ form.hectareas.label }}
+                </label>
+                {{ form.hectareas }}
+                {% if form.hectareas.help_text %}
+                    <small class="form-help">{{ form.hectareas.help_text }}</small>
+                {% endif %}
+                {% if form.hectareas.errors %}
+                    <div class="form-errors">
+                        {{ form.hectareas.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.edad_arboles.id_for_label }}">
+                    {{ form.edad_arboles.label }}
+                </label>
+                {{ form.edad_arboles }}
+                {% if form.edad_arboles.help_text %}
+                    <small class="form-help">{{ form.edad_arboles.help_text }}</small>
+                {% endif %}
+                {% if form.edad_arboles.errors %}
+                    <div class="form-errors">
+                        {{ form.edad_arboles.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.densidad_plantacion.id_for_label }}">
+                    {{ form.densidad_plantacion.label }}
+                </label>
+                {{ form.densidad_plantacion }}
+                {% if form.densidad_plantacion.help_text %}
+                    <small class="form-help">{{ form.densidad_plantacion.help_text }}</small>
+                {% endif %}
+                {% if form.densidad_plantacion.errors %}
+                    <div class="form-errors">
+                        {{ form.densidad_plantacion.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.tipo_riego.id_for_label }}">
+                    {{ form.tipo_riego.label }}
+                </label>
+                {{ form.tipo_riego }}
+                {% if form.tipo_riego.errors %}
+                    <div class="form-errors">
+                        {{ form.tipo_riego.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.tipo_suelo.id_for_label }}">
+                    {{ form.tipo_suelo.label }}
+                </label>
+                {{ form.tipo_suelo }}
+                {% if form.tipo_suelo.errors %}
+                    <div class="form-errors">
+                        {{ form.tipo_suelo.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.fertilizacion.id_for_label }}">
+                    {{ form.fertilizacion.label }}
+                </label>
+                {{ form.fertilizacion }}
+                {% if form.fertilizacion.errors %}
+                    <div class="form-errors">
+                        {{ form.fertilizacion.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success btn--lg">
+                    Generar Predicción
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn--secondary btn--lg">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Panel de información -->
+    <div class="form-section">
+        <h3>Información de Predicción</h3>
+        
+        <div class="card">
+            <div class="card__body">
+                <h4>¿Cómo funciona?</h4>
+                <p>Nuestro sistema utiliza algoritmos de aprendizaje automático para predecir la producción agrícola basándose en:</p>
+                
+                <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                    <li><strong>Tipo de cultivo:</strong> Cada árbol tiene características específicas de rendimiento</li>
+                    <li><strong>Condiciones geográficas:</strong> Clima y ubicación regional</li>
+                    <li><strong>Datos del cultivo:</strong> Edad, densidad y superficie</li>
+                    <li><strong>Prácticas agrícolas:</strong> Riego, suelo y fertilización</li>
+                </ul>
+                
+                <div class="status status--info" style="margin-top: 1rem;">
+                    <strong>Resultado:</strong> Obtendrá la producción estimada por hectárea, producción total y un porcentaje de confiabilidad.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card__body">
+                <h4>Consejos</h4>
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                    <li>Proporcione datos precisos para mejores resultados</li>
+                    <li>La edad de los árboles afecta significativamente la producción</li>
+                    <li>El tipo de riego y suelo son factores clave</li>
+                    <li>La densidad óptima varía según el tipo de cultivo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-errors {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-4);
+}
+
+.form-help {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-4);
+    display: block;
+}
+</style>
+{% endblock %}

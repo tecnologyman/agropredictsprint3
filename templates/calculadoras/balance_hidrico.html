@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Calculadora de Balance Hídrico - AgroPredict{% endblock %}
+{% block content %}
+
+<style>
+.form-section {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.result-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+.balance-bar {
+    height: 20px;
+    border-radius: 10px;
+    background: #e9ecef;
+    overflow: hidden;
+    position: relative;
+}
+.balance-fill.positive { background: #28a745; }
+.balance-fill.negative { background: #dc3545; }
+.balance-fill.neutral { background: #03a9f4; }
+.formula-explanation {
+    background: #e1f5fe;
+    border-left: 4px solid #03a9f4;
+    padding: 15px;
+    margin: 20px 0;
+}
+.component-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+.component-item:last-child {
+    border-bottom: none;
+}
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a></li>
+                    <li class="breadcrumb-item active">Balance Hídrico</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center mb-4">
+                <i class="fas fa-cloud-rain text-primary me-3" style="font-size: 2.5rem;"></i>
+                <div>
+                    <h1 class="h3 mb-1">Calculadora de Balance Hídrico</h1>
+                    <p class="text-muted mb-0">Determina el balance de agua en tu cultivo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Componentes del Balance -->
+                <div class="form-section">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-cloud-rain me-2"></i>
+                        Componentes del Balance
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <label for="precipitacion" class="form-label">Precipitación (mm)</label>
+                        <input type="number" class="form-control" name="precipitacion" 
+                               id="precipitacion" step="0.1" min="0" required placeholder="ej: 50.0">
+                        <div class="form-text">Lluvia acumulada en el periodo analizado</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="etc" class="form-label">Evapotranspiración del Cultivo - ETc (mm)</label>
+                        <input type="number" class="form-control" name="etc" id="etc" 
+                               step="0.1" min="0" required placeholder="ej: 45.0">
+                        <div class="form-text">Agua consumida por el cultivo (ETc = ET₀ × Kc)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="infiltracion" class="form-label">Infiltración Profunda (mm)</label>
+                        <input type="number" class="form-control" name="infiltracion" 
+                               id="infiltracion" step="0.1" min="0" value="0" placeholder="ej: 5.0">
+                        <div class="form-text">Agua que percola fuera de la zona radicular (opcional)</div>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calcular Balance Hídrico
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            {% if resultado %}
+            <div class="form-section">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Resultado del Balance
+                </h5>
+
+                <!-- Resultado Principal -->
+                <div class="result-card">
+                    <h6 class="text-primary mb-3">Balance Hídrico</h6>
+                    
+                    <div class="text-center mb-4">
+                        {% if resultado.balance > 0 %}
+                        <div class="display-4 text-success">+{{ resultado.balance }} mm</div>
+                        <p class="text-muted">Superávit de agua</p>
+                        {% elif resultado.balance < 0 %}
+                        <div class="display-4 text-danger">{{ resultado.balance }} mm</div>
+                        <p class="text-muted">Déficit de agua</p>
+                        {% else %}
+                        <div class="display-4 text-info">{{ resultado.balance }} mm</div>
+                        <p class="text-muted">Equilibrio hídrico</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="balance-bar mb-2">
+                        {% if resultado.balance > 5 %}
+                        <div class="balance-fill positive" style="width: 100%"></div>
+                        {% elif resultado.balance < -5 %}
+                        <div class="balance-fill negative" style="width: 100%"></div>
+                        {% else %}
+                        <div class="balance-fill neutral" style="width: 100%"></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Componentes -->
+                <div class="result-card">
+                    <h6 class="text-primary mb-3">Componentes</h6>
+                    
+                    <div class="component-item">
+                        <div>
+                            <i class="fas fa-cloud-rain text-primary me-2"></i>
+                            Precipitación
+                        </div>
+                        <strong class="text-success">+{{ request.POST.precipitacion }} mm</strong>
+                    </div>
+                    
+                    <div class="component-item">
+                        <div>
+                            <i class="fas fa-sun text-warning me-2"></i>
+                            Evapotranspiración
+                        </div>
+                        <strong class="text-danger">-{{ request.POST.etc }} mm</strong>
+                    </div>
+                    
+                    {% if request.POST.infiltracion != "0" %}
+                    <div class="component-item">
+                        <div>
+                            <i class="fas fa-arrow-down text-secondary me-2"></i>
+                            Infiltración
+                        </div>
+                        <strong class="text-danger">-{{ request.POST.infiltracion }} mm</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Interpretación -->
+                <div class="result-card">
+                    <h6 class="text-primary mb-3">Interpretación</h6>
+                    {% if resultado.balance > 5 %}
+                    <div class="alert alert-success mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Superávit Hídrico:</strong> Hay exceso de agua. 
+                        Considera reducir frecuencia de riego y mejorar drenaje si es necesario.
+                    </div>
+                    {% elif resultado.balance < -5 %}
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Déficit Hídrico:</strong> Falta agua para el cultivo. 
+                        Se requiere aplicar riego adicional.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-balance-scale me-2"></i>
+                        <strong>Equilibrio Hídrico:</strong> El balance está en equilibrio. 
+                        Mantener el manejo actual.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Información educativa -->
+            <div class="form-section">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Método de Balance Hídrico
+                </h5>
+                
+                <div class="formula-explanation">
+                    <h6>Fórmula Base:</h6>
+                    <p><strong>Balance = Precipitación - ETc - Infiltración Profunda</strong></p>
+                </div>
+                
+                <h6>Componentes:</h6>
+                <ul>
+                    <li><strong>Precipitación:</strong> Agua de lluvia disponible (mm)</li>
+                    <li><strong>ETc:</strong> Agua consumida por el cultivo (mm)</li>
+                    <li><strong>Infiltración:</strong> Agua que percola fuera de la zona radicular (mm)</li>
+                </ul>
+                
+                <h6>Interpretación:</h6>
+                <ul>
+                    <li><strong>Balance > 0:</strong> Superávit hídrico</li>
+                    <li><strong>Balance ≈ 0:</strong> Equilibrio hídrico</li>
+                    <li><strong>Balance < 0:</strong> Déficit hídrico - requiere riego</li>
+                </ul>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Nota:</strong> Este es un balance simplificado. Para análisis más detallado, 
+                    considere capacidad de campo y punto de marchitez del suelo.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

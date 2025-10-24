@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Predicciones - AgroPredict{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2>Historial de Predicciones</h2>
+            <p>Lista completa de todas las predicciones realizadas</p>
+        </div>
+        <a href="{% url 'nueva_prediccion' %}" class="btn btn--primary">
+            Nueva Predicción
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card__body">
+        <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Tipo de Árbol</label>
+                <select name="tipo_arbol" class="form-control">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos_arboles %}
+                        <option value="{{ tipo.pk }}" {% if filtros.tipo_arbol == tipo.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ tipo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Región</label>
+                <select name="region" class="form-control">
+                    <option value="">Todas</option>
+                    {% for region in regiones %}
+                        <option value="{{ region.pk }}" {% if filtros.region == region.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ region.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-control">
+                    <option value="">Todos</option>
+                    {% for estado_val, estado_name in estados %}
+                        <option value="{{ estado_val }}" {% if filtros.estado == estado_val %}selected{% endif %}>
+                            {{ estado_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn--primary">Filtrar</button>
+                <a href="{% url 'lista_predicciones' %}" class="btn btn--secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de predicciones -->
+<div class="predictions-section">
+    {% if predicciones %}
+        <div class="predictions-list">
+            {% for prediccion in predicciones %}
+                <div class="prediction-item">
+                    <div class="prediction-header">
+                        <div>
+                            <h4 class="prediction-title">{{ prediccion.tipo_arbol }}</h4>
+                            <div class="prediction-location">
+                                {{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="prediction-date">{{ prediccion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                            <div style="margin-top: 0.5rem;">
+                                <span class="status status--{% if prediccion.estado == 'completada' %}success{% elif prediccion.estado == 'error' %}error{% else %}info{% endif %}">
+                                    {{ prediccion.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Hectáreas</span>
+                            <span class="stat-value">{{ prediccion.hectareas|floatformat:1 }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Edad (años)</span>
+                            <span class="stat-value">{{ prediccion.edad_arboles }}</span>
+                        </div>
+                        {% if prediccion.produccion_por_hectarea %}
+                            <div class="stat-item">
+                                <span class="stat-label">Ton/Ha</span>
+                                <span class="stat-value">{{ prediccion.produccion_por_hectarea|floatformat:2 }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total (Ton)</span>
+                                <span class="stat-value">{{ prediccion.produccion_total|floatformat:2 }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Confiabilidad</span>
+                                <span class="stat-value">{{ prediccion.confiabilidad }}%</span>
+                            </div>
+                        {% endif %}
+                        <div class="stat-item">
+                            <span class="stat-label">Acciones</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{% url 'prediccion_detalle' prediccion.pk %}" class="btn btn--sm btn--secondary">Ver</a>
+                                <form method="post" action="{% url 'eliminar_prediccion' prediccion.pk %}" style="display: inline;" onsubmit="return confirm('¿Está seguro de eliminar esta predicción?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn--sm" style="background: var(--color-error); color: white;">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Paginación -->
+        {% if predicciones.has_other_pages %}
+            <div style="text-align: center; margin-top: 2rem;">
+                <div style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                    {% if predicciones.has_previous %}
+                        <a href="?page={{ predicciones.previous_page_number }}" class="btn btn--sm btn--secondary">Anterior</a>
+                    {% endif %}
+                    
+                    <span style="padding: 0 1rem;">
+                        Página {{ predicciones.number }} de {{ predicciones.paginator.num_pages }}
+                    </span>
+                    
+                    {% if predicciones.has_next %}
+                        <a href="?page={{ predicciones.next_page_number }}" class="btn btn--sm btn--secondary">Siguiente</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="card">
+            <div class="card__body" style="text-align: center; padding: 3rem;">
+                <h3>No hay predicciones</h3>
+                <p>No se encontraron predicciones con los filtros aplicados.</p>
+                <a href="{% url 'nueva_prediccion' %}" class="btn btn--primary">Crear primera predicción</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

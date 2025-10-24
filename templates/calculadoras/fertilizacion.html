@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Calculadora de Fertilización NPK - AgroPredict{% endblock %}
+{% block content %}
+
+<style>
+.form-section {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.result-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+.nutrient-bar {
+    height: 20px;
+    border-radius: 10px;
+    background: #e9ecef;
+    overflow: hidden;
+    position: relative;
+}
+.nutrient-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+.nutrient-n { background: #28a745; }
+.nutrient-p { background: #17a2b8; }
+.nutrient-k { background: #ffc107; }
+.formula-explanation {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 15px;
+    margin: 20px 0;
+}
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a></li>
+                    <li class="breadcrumb-item active">Fertilización NPK</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center mb-4">
+                <i class="fas fa-leaf text-success me-3" style="font-size: 2.5rem;"></i>
+                <div>
+                    <h1 class="h3 mb-1">Calculadora de Fertilización NPK</h1>
+                    <p class="text-muted mb-0">Método de fertilización razonada basado en análisis de suelo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Datos del Cultivo -->
+                <div class="form-section">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-seedling me-2"></i>
+                        Datos del Cultivo
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cultivo" class="form-label">Tipo de Cultivo</label>
+                            <select class="form-select" name="cultivo" id="cultivo" required>
+                                <option value="">Seleccionar cultivo...</option>
+                                {% for cultivo in cultivos %}
+                                <option value="{{ cultivo }}">{{ cultivo|title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="rendimiento_esperado" class="form-label">Rendimiento Esperado (ton/ha)</label>
+                            <input type="number" class="form-control" name="rendimiento_esperado" 
+                                   id="rendimiento_esperado" step="0.1" min="0" required
+                                   placeholder="ej: 45.0">
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="superficie" class="form-label">Superficie Total (hectáreas)</label>
+                            <input type="number" class="form-control" name="superficie" 
+                                   id="superficie" step="0.1" min="0.1" value="1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Análisis de Suelo -->
+                <div class="form-section">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-microscope me-2"></i>
+                        Análisis de Suelo
+                    </h5>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <small>Ingrese los valores del análisis de suelo más reciente</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="nitrogeno_suelo" class="form-label">Nitrógeno (N) mg/kg</label>
+                            <input type="number" class="form-control" name="nitrogeno_suelo" 
+                                   id="nitrogeno_suelo" step="0.1" min="0" placeholder="ej: 25.5">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fosforo_suelo" class="form-label">Fósforo (P2O5) mg/kg</label>
+                            <input type="number" class="form-control" name="fosforo_suelo" 
+                                   id="fosforo_suelo" step="0.1" min="0" placeholder="ej: 12.3">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="potasio_suelo" class="form-label">Potasio (K) mg/kg</label>
+                            <input type="number" class="form-control" name="potasio_suelo" 
+                                   id="potasio_suelo" step="0.1" min="0" placeholder="ej: 180.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fertilizante a Usar -->
+                <div class="form-section">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-flask me-2"></i>
+                        Fertilizante Principal
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <label for="formula_npk" class="form-label">Fórmula NPK</label>
+                        <select class="form-select" name="formula_npk" id="formula_npk">
+                            <option value="15-15-15">15-15-15 (Balanceado)</option>
+                            <option value="18-46-0">18-46-0 (Alto Fósforo)</option>
+                            <option value="12-12-17">12-12-17 (Alto Potasio)</option>
+                            <option value="20-10-10">20-10-10 (Alto Nitrógeno)</option>
+                            <option value="10-30-20">10-30-20 (Desarrollo)</option>
+                        </select>
+                        <div class="form-text">Seleccione la fórmula de fertilizante disponible</div>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calcular Dosis de Fertilización
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            {% if resultado %}
+            <div class="form-section">
+                <h5 class="text-success mb-3">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Resultados del Cálculo
+                </h5>
+
+                <!-- Requerimientos vs Disponible -->
+                <div class="result-card">
+                    <h6 class="text-primary mb-3">Balance Nutricional (kg/ha)</h6>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Nitrógeno (N)</span>
+                            <span><strong>{{ resultado.requerimiento.N }} kg/ha</strong></span>
+                        </div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill nutrient-n" style="width: {% widthratio resultado.requerimiento.N 200 100 %}%"></div>
+                        </div>
+                        <small class="text-muted">Disponible: {{ resultado.disponible.N }} kg/ha | Extracción: {{ resultado.extraccion.N }} kg/ha</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Fósforo (P2O5)</span>
+                            <span><strong>{{ resultado.requerimiento.P2O5 }} kg/ha</strong></span>
+                        </div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill nutrient-p" style="width: {% widthratio resultado.requerimiento.P2O5 100 100 %}%"></div>
+                        </div>
+                        <small class="text-muted">Disponible: {{ resultado.disponible.P2O5 }} kg/ha | Extracción: {{ resultado.extraccion.P2O5 }} kg/ha</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Potasio (K2O)</span>
+                            <span><strong>{{ resultado.requerimiento.K2O }} kg/ha</strong></span>
+                        </div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill nutrient-k" style="width: {% widthratio resultado.requerimiento.K2O 300 100 %}%"></div>
+                        </div>
+                        <small class="text-muted">Disponible: {{ resultado.disponible.K2O }} kg/ha | Extracción: {{ resultado.extraccion.K2O }} kg/ha</small>
+                    </div>
+                </div>
+
+                <!-- Dosis de Fertilizante -->
+                <div class="result-card">
+                    <h6 class="text-primary mb-3">Dosis de Fertilizantes</h6>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-success text-white rounded">
+                                <h4 class="mb-1">{{ resultado.dosis_npk_ha }} kg/ha</h4>
+                                <small>Fertilizante NPK</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-info text-white rounded">
+                                <h4 class="mb-1">{{ resultado.dosis_npk_total }} kg</h4>
+                                <small>Total necesario</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fertilizantes adicionales -->
+                    {% if resultado.fertilizantes_adicionales.urea > 0 or resultado.fertilizantes_adicionales.superfosfato > 0 or resultado.fertilizantes_adicionales.muriato > 0 %}
+                    <div class="mt-3">
+                        <h6 class="text-warning">Fertilizantes Complementarios (kg/ha):</h6>
+                        <ul class="list-unstyled">
+                            {% if resultado.fertilizantes_adicionales.urea > 0 %}
+                            <li><i class="fas fa-circle text-primary me-2"></i>Urea: {{ resultado.fertilizantes_adicionales.urea }} kg/ha</li>
+                            {% endif %}
+                            {% if resultado.fertilizantes_adicionales.superfosfato > 0 %}
+                            <li><i class="fas fa-circle text-info me-2"></i>Superfosfato Triple: {{ resultado.fertilizantes_adicionales.superfosfato }} kg/ha</li>
+                            {% endif %}
+                            {% if resultado.fertilizantes_adicionales.muriato > 0 %}
+                            <li><i class="fas fa-circle text-warning me-2"></i>Muriato de Potasio: {{ resultado.fertilizantes_adicionales.muriato }} kg/ha</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Costo Estimado -->
+                <div class="result-card">
+                    <h6 class="text-primary mb-3">Análisis Económico</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Costo Estimado Total:</span>
+                        <h5 class="text-success mb-0">${{ resultado.costo_estimado|floatformat:0 }} CLP</h5>
+                    </div>
+                    <small class="text-muted">*Precios referenciales. Verificar con proveedores locales</small>
+                </div>
+            </div>
+            {% else %}
+            <!-- Información educativa -->
+            <div class="form-section">
+                <h5 class="text-info mb-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Método de Fertilización Razonada
+                </h5>
+                
+                <div class="formula-explanation">
+                    <h6>Fórmula Base:</h6>
+                    <p><strong>Dosis = (Extracción del Cultivo - Aporte del Suelo) / Contenido del Fertilizante</strong></p>
+                </div>
+                
+                <h6>Pasos del Cálculo:</h6>
+                <ol>
+                    <li><strong>Extracción del Cultivo:</strong> Se calcula multiplicando el rendimiento esperado por los coeficientes de extracción específicos de cada cultivo</li>
+                    <li><strong>Aporte del Suelo:</strong> Se determina a partir del análisis de suelo considerando la profundidad efectiva (30 cm)</li>
+                    <li><strong>Requerimiento Neto:</strong> Diferencia entre la extracción y el aporte del suelo</li>
+                    <li><strong>Dosis de Fertilizante:</strong> Se calcula según el contenido nutricional del fertilizante elegido</li>
+                </ol>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Importante:</strong> Los coeficientes utilizados están basados en estudios de INIA Chile y literatura agronómica especializada. Recomendamos validar con análisis foliar.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

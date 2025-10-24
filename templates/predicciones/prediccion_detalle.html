@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Predicción #{{ prediccion.id }} - AgroPredict{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2>Predicción #{{ prediccion.id }}</h2>
+            <p>{{ prediccion.tipo_arbol }} en {{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'lista_predicciones' %}" class="btn btn--secondary">Volver al Historial</a>
+            <a href="{% url 'nueva_prediccion' %}" class="btn btn--primary">Nueva Predicción</a>
+        </div>
+    </div>
+</div>
+
+<div class="prediction-layout">
+    <!-- Información básica -->
+    <div class="form-section">
+        <h3>Información del Cultivo</h3>
+        
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="summary-label">Tipo de Árbol</span>
+                <span class="summary-value">{{ prediccion.tipo_arbol }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Ubicación</span>
+                <span class="summary-value">{{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Hectáreas</span>
+                <span class="summary-value">{{ prediccion.hectareas|floatformat:1 }} ha</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Edad de Árboles</span>
+                <span class="summary-value">{{ prediccion.edad_arboles }} años</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Densidad</span>
+                <span class="summary-value">{{ prediccion.densidad_plantacion }} árb/ha</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Estado</span>
+                <span class="status status--{% if prediccion.estado == 'completada' %}success{% elif prediccion.estado == 'error' %}error{% else %}info{% endif %}">
+                    {{ prediccion.get_estado_display }}
+                </span>
+            </div>
+        </div>
+        
+        <h4 style="margin: 2rem 0 1rem 0;">Condiciones del Cultivo</h4>
+        
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="summary-label">Tipo de Riego</span>
+                <span class="summary-value">{{ prediccion.get_tipo_riego_display }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Tipo de Suelo</span>
+                <span class="summary-value">{{ prediccion.get_tipo_suelo_display }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Fertilización</span>
+                <span class="summary-value">{{ prediccion.get_fertilizacion_display }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Fecha Creación</span>
+                <span class="summary-value">{{ prediccion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resultados -->
+    <div class="results-section">
+        <h3>Resultados de la Predicción</h3>
+        
+        {% if prediccion.estado == 'completada' and prediccion.produccion_por_hectarea %}
+            <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Producción por Hectárea</span>
+                        <span class="decision-icon">🌾</span>
+                    </div>
+                    <div class="metric-value">{{ prediccion.produccion_por_hectarea|floatformat:2 }} Ton/Ha</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Producción Total</span>
+                        <span class="decision-icon">📦</span>
+                    </div>
+                    <div class="metric-value">{{ prediccion.produccion_total|floatformat:2 }} Ton</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Confiabilidad</span>
+                        <span class="decision-icon">🎯</span>
+                    </div>
+                    <div class="metric-value {% if prediccion.confiabilidad < 75 %}high-risk{% endif %}">
+                        {{ prediccion.confiabilidad }}%
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Análisis detallado -->
+            <div class="card" style="margin-top: 2rem;">
+                <div class="card__body">
+                    <h4>Análisis de la Predicción</h4>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <h5>Factores Positivos</h5>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--color-success);">
+                                {% if prediccion.tipo_riego == 'goteo' %}
+                                    <li>Riego por goteo optimiza el uso de agua</li>
+                                {% endif %}
+                                {% if prediccion.tipo_suelo == 'franco' %}
+                                    <li>Suelo franco ideal para el cultivo</li>
+                                {% endif %}
+                                {% if prediccion.fertilizacion == 'mixta' %}
+                                    <li>Fertilización mixta mejora nutrientes</li>
+                                {% endif %}
+                                {% if prediccion.edad_arboles >= 5 and prediccion.edad_arboles <= 15 %}
+                                    <li>Árboles en edad óptima de producción</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h5>Factores a Considerar</h5>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--color-warning);">
+                                {% if prediccion.edad_arboles < 4 %}
+                                    <li>Árboles jóvenes, producción limitada</li>
+                                {% endif %}
+                                {% if prediccion.edad_arboles > 20 %}
+                                    <li>Árboles maduros, considerar renovación</li>
+                                {% endif %}
+                                {% if prediccion.tipo_riego == 'gravedad' %}
+                                    <li>Sistema de riego tradicional menos eficiente</li>
+                                {% endif %}
+                                {% if prediccion.fertilizacion == 'ninguna' %}
+                                    <li>Sin fertilización puede limitar el rendimiento</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--color-bg-1); border-radius: var(--radius-base);">
+                        <h5>Recomendaciones</h5>
+                        <p style="margin: 0.5rem 0;">
+                            Basándose en los parámetros ingresados, se estima una producción de 
+                            <strong>{{ prediccion.produccion_por_hectarea|floatformat:2 }} toneladas por hectárea</strong>.
+                            El nivel de confiabilidad de <strong>{{ prediccion.confiabilidad }}%</strong> indica
+                            {% if prediccion.confiabilidad >= 85 %}
+                                una predicción muy confiable.
+                            {% elif prediccion.confiabilidad >= 75 %}
+                                una predicción confiable.
+                            {% else %}
+                                que existen factores de incertidumbre a considerar.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% elif prediccion.estado == 'error' %}
+            <div class="card">
+                <div class="card__body" style="text-align: center;">
+                    <div class="status status--error" style="display: inline-block; margin-bottom: 1rem;">
+                        Error en el procesamiento
+                    </div>
+                    <p>Hubo un error al procesar esta predicción. Por favor, intente crear una nueva predicción.</p>
+                    <a href="{% url 'nueva_prediccion' %}" class="btn btn--primary">Nueva Predicción</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card__body" style="text-align: center;">
+                    <div class="status status--info" style="display: inline-block; margin-bottom: 1rem;">
+                        Procesando...
+                    </div>
+                    <p>La predicción está siendo procesada. Actualice la página en unos momentos.</p>
+                    <button onclick="window.location.reload()" class="btn btn--secondary">Actualizar</button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Acciones adicionales -->
+<div style="text-align: center; margin-top: 2rem; padding: 2rem; border-top: 1px solid var(--color-border);">
+    <div style="display: flex; justify-content: center; gap: 1rem;">
+        <a href="{% url 'lista_predicciones' %}" class="btn btn--secondary btn--lg">Ver Historial</a>
+        <a href="{% url 'nueva_prediccion' %}" class="btn btn--primary btn--lg">Nueva Predicción</a>
+        <form method="post" action="{% url 'eliminar_prediccion' prediccion.pk %}" style="display: inline;" onsubmit="return confirm('¿Está seguro de eliminar esta predicción?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn--lg" style="background: var(--color-error); color: white;">
+                Eliminar Predicción
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

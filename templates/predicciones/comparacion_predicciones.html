@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Comparación de Predicciones - AgroPredict{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Comparación de Predicciones</h2>
+    <p>Compare múltiples predicciones para tomar mejores decisiones de inversión</p>
+</div>
+
+<!-- Selector de predicciones -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card__body">
+        <h4>Seleccionar Predicciones para Comparar</h4>
+        <form method="get" style="margin-top: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                {% for prediccion in todas_predicciones %}
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="predicciones" value="{{ prediccion.id }}" 
+                               {% if prediccion.id|stringformat:"s" in prediccion_ids_selected %}checked{% endif %}
+                               class="form-check-input">
+                        <span class="checkbox-label">
+                            {{ prediccion.tipo_arbol }} - {{ prediccion.comuna.nombre }}
+                            <small>({{ prediccion.fecha_creacion|date:"d/m/Y" }})</small>
+                            {% if prediccion.roi_proyectado %}
+                                <span class="roi-badge roi-{{ prediccion.roi_proyectado|floatformat:0 }}">
+                                    ROI: {{ prediccion.roi_proyectado|floatformat:1 }}%
+                                </span>
+                            {% endif %}
+                        </span>
+                    </label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn--primary">Comparar Seleccionadas</button>
+        </form>
+    </div>
+</div>
+
+{% if comparacion_data %}
+<!-- Tabla de comparación -->
+<div class="chart-section">
+    <h3>Comparación Detallada</h3>
+    <div class="comparison-table-container">
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Predicción</th>
+                    <th>Ubicación</th>
+                    <th>Hectáreas</th>
+                    <th>Producción<br><small>(ton/ha)</small></th>
+                    <th>ROI Proyectado<br><small>(5 años)</small></th>
+                    <th>Inversión<br><small>(CLP)</small></th>
+                    <th>ROI por Ha<br><small>(%/ha)</small></th>
+                    <th>Consumo Agua<br><small>(m³/ha)</small></th>
+                    <th>Eficiencia<br><small>(ton/m³)</small></th>
+                    <th>Riesgo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in comparacion_data %}
+                <tr>
+                    <td class="prediccion-cell">
+                        <strong>{{ data.prediccion.tipo_arbol }}</strong>
+                        <small>ID: {{ data.prediccion.id }}</small>
+                    </td>
+                    <td>{{ data.prediccion.comuna.nombre }}<br><small>{{ data.prediccion.comuna.region.nombre }}</small></td>
+                    <td>{{ data.prediccion.hectareas|floatformat:1 }}</td>
+                    <td class="number-cell">{{ data.prediccion.produccion_por_hectarea|floatformat:2 }}</td>
+                    <td class="roi-cell">
+                        {% if data.prediccion.roi_proyectado %}
+                            <span class="roi-value {% if data.prediccion.roi_proyectado >= 30 %}high-roi{% elif data.prediccion.roi_proyectado >= 15 %}medium-roi{% else %}low-roi{% endif %}">
+                                {{ data.prediccion.roi_proyectado|floatformat:1 }}%
+                            </span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="number-cell">
+                        {% if data.prediccion.inversion_estimada %}
+                            ${{ data.prediccion.inversion_estimada|floatformat:0 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="number-cell">{{ data.roi_por_hectarea|floatformat:1 }}%</td>
+                    <td class="number-cell">{{ data.prediccion.consumo_agua_por_hectarea|floatformat:0|default:"-" }}</td>
+                    <td class="number-cell">{{ data.eficiencia_agua|floatformat:4|default:"-" }}</td>
+                    <td class="risk-cell">
+                        <span class="risk-badge risk-{{ data.prediccion.get_rentabilidad_categoria|lower|cut:" " }}">
+                            {{ data.prediccion.get_rentabilidad_categoria }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Análisis comparativo -->
+<div class="prediction-layout">
+    <div class="form-section">
+        <h3>📊 Análisis Comparativo</h3>
+        
+        <div class="card">
+            <div class="card__body">
+                {% with mejor_roi=comparacion_data|first %}
+                    {% for data in comparacion_data %}
+                        {% if data.prediccion.roi_proyectado > mejor_roi.prediccion.roi_proyectado %}
+                            {% with mejor_roi=data %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                
+                    <div class="analysis-section">
+                        <h5>🏆 Mejor Oportunidad de Inversión</h5>
+                        <p><strong>{{ mejor_roi.prediccion.tipo_arbol }}</strong> en {{ mejor_roi.prediccion.comuna.nombre }} 
+                           con un ROI proyectado del <strong>{{ mejor_roi.prediccion.roi_proyectado|floatformat:1 }}%</strong></p>
+                    </div>
+                {% endwith %}
+                
+                <div class="analysis-section">
+                    <h5>💰 Comparación de Inversiones</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        {% for data in comparacion_data %}
+                            <div class="investment-summary">
+                                <h6>{{ data.prediccion.tipo_arbol }}</h6>
+                                <div class="investment-metrics">
+                                    <div>Inversión: ${{ data.prediccion.inversion_estimada|floatformat:0|default:"N/A" }}</div>
+                                    <div>ROI/Ha: {{ data.roi_por_hectarea|floatformat:1 }}%</div>
+                                    <div>Riesgo: {{ data.prediccion.get_rentabilidad_categoria }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="analysis-section">
+                    <h5>🌱 Eficiencia de Recursos</h5>
+                    <p>Análisis del uso eficiente de agua y tierra para cada alternativa:</p>
+                    <ul>
+                        {% for data in comparacion_data %}
+                            <li><strong>{{ data.prediccion.tipo_arbol }}:</strong> 
+                                {{ data.eficiencia_agua|floatformat:4 }} toneladas por m³ de agua
+                                ({{ data.prediccion.consumo_agua_por_hectarea|floatformat:0 }} m³/ha)</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <h3>🎯 Recomendaciones</h3>
+        
+        <div class="card">
+            <div class="card__body">
+                <div class="recommendations">
+                    {% for data in comparacion_data %}
+                        <div class="recommendation-item">
+                            <h5>{{ data.prediccion.tipo_arbol }} - {{ data.prediccion.comuna.nombre }}</h5>
+                            {% if data.prediccion.roi_proyectado >= 30 %}
+                                <div class="recommendation excellent">
+                                    <strong>EXCELENTE:</strong> Alta rentabilidad, proceder con inversión.
+                                </div>
+                            {% elif data.prediccion.roi_proyectado >= 15 %}
+                                <div class="recommendation good">
+                                    <strong>BUENA:</strong> Rentabilidad atractiva, evaluar riesgos.
+                                </div>
+                            {% elif data.prediccion.roi_proyectado >= 0 %}
+                                <div class="recommendation moderate">
+                                    <strong>MODERADA:</strong> Considerar optimizaciones.
+                                </div>
+                            {% else %}
+                                <div class="recommendation poor">
+                                    <strong>NO RECOMENDADA:</strong> Buscar alternativas.
+                                </div>
+                            {% endif %}
+                            
+                            <div class="recommendation-details">
+                                <small>
+                                    Inversión: ${{ data.prediccion.inversion_estimada|floatformat:0|default:"N/A" }} | 
+                                    ROI: {{ data.prediccion.roi_proyectado|floatformat:1|default:"N/A" }}% | 
+                                    Confiabilidad: {{ data.prediccion.confiabilidad }}%
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones adicionales -->
+<div style="text-align: center; margin-top: 2rem;">
+    <a href="{% url 'nueva_prediccion' %}" class="btn btn--primary btn--lg">Nueva Predicción</a>
+    <a href="{% url 'analisis_prediccion' %}" class="btn btn--secondary btn--lg">Análisis Detallado</a>
+    <a href="{% url 'dashboard' %}" class="btn btn--secondary btn--lg">Dashboard</a>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card__body" style="text-align: center; padding: 3rem;">
+        <h3>Seleccione predicciones para comparar</h3>
+        <p>Elija entre 2 y 5 predicciones usando los checkboxes arriba para generar una comparación detallada.</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.checkbox-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-item:hover {
+    background: var(--color-bg-1);
+    border-color: var(--color-primary);
+}
+
+.checkbox-item input:checked + .checkbox-label {
+    font-weight: bold;
+}
+
+.checkbox-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.checkbox-label small {
+    color: var(--color-text-secondary);
+}
+
+.roi-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: bold;
+    margin-top: 0.25rem;
+}
+
+.roi-badge.roi-30, .roi-badge.roi-50 {
+    background: var(--color-success);
+    color: white;
+}
+
+.roi-badge.roi-15, .roi-badge.roi-20 {
+    background: var(--color-warning);
+    color: white;
+}
+
+.roi-badge {
+    background: var(--color-error);
+    color: white;
+}
+
+.comparison-table-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    border: 1px solid var(--color-border);
+}
+
+.comparison-table th {
+    background: var(--color-bg-1);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.prediccion-cell {
+    text-align: left !important;
+    font-weight: bold;
+}
+
+.prediccion-cell small {
+    display: block;
+    font-weight: normal;
+    color: var(--color-text-secondary);
+}
+
+.number-cell {
+    text-align: right !important;
+    font-family: monospace;
+}
+
+.roi-cell {
+    text-align: center !important;
+}
+
+.risk-cell {
+    text-align: center !important;
+}
+
+.risk-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: bold;
+}
+
+.risk-badge.risk-muyalta {
+    background: var(--color-success);
+    color: white;
+}
+
+.risk-badge.risk-alta {
+    background: var(--color-warning);
+    color: white;
+}
+
+.risk-badge.risk-media {
+    background: var(--color-warning);
+    color: var(--color-text);
+}
+
+.risk-badge.risk-baja, .risk-badge.risk-negativa {
+    background: var(--color-error);
+    color: white;
+}
+
+.analysis-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.analysis-section:last-child {
+    border-bottom: none;
+}
+
+.investment-summary {
+    padding: 1rem;
+    background: var(--color-bg-1);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+}
+
+.investment-summary h6 {
+    margin: 0 0 0.5rem 0;
+    color: var(--color-primary);
+}
+
+.investment-metrics div {
+    margin: 0.25rem 0;
+    font-size: var(--font-size-sm);
+}
+
+.recommendation-item {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+}
+
+.recommendation-item h5 {
+    margin: 0 0 0.5rem 0;
+}
+
+.recommendation {
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    margin: 0.5rem 0;
+}
+
+.recommendation.excellent {
+    background: rgba(34, 197, 94, 0.1);
+    border-left: 4px solid var(--color-success);
+}
+
+.recommendation.good {
+    background: rgba(234, 179, 8, 0.1);
+    border-left: 4px solid var(--color-warning);
+}
+
+.recommendation.moderate {
+    background: rgba(168, 162, 158, 0.1);
+    border-left: 4px solid var(--color-text-secondary);
+}
+
+.recommendation.poor {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid var(--color-error);
+}
+
+.recommendation-details {
+    margin-top: 0.5rem;
+    color: var(--color-text-secondary);
+}
+</style>
+{% endblock %}

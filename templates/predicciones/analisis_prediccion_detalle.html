@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Análisis Detallado - {{ prediccion.tipo_arbol }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Análisis de Inversión</h2>
+    <p>{{ prediccion.tipo_arbol }} en {{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}</p>
+</div>
+
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">ROI Proyectado</span>
+        </div>
+        <div class="metric-value {% if prediccion.roi_proyectado >= 30 %}high-roi{% elif prediccion.roi_proyectado >= 15 %}medium-roi{% else %}low-roi{% endif %}">
+    {{ prediccion.roi_proyectado|floatformat:1 }}%
+</div>
+
+        <div class="metric-subtitle">5 años</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Inversión Requerida</span>
+        </div>
+        <div class="metric-value">
+            ${{ prediccion.inversion_estimada|floatformat:0 }}
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Ingresos Proyectados</span>
+        </div>
+        <div class="metric-value">
+            ${{ prediccion.ingresos_proyectados_5anos|floatformat:0 }}
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header">
+            <span class="metric-label">Tiempo Recuperación</span>
+        </div>
+        <div class="metric-value">
+            {{ analisis_riesgo.tiempo_recuperacion }}
+        </div>
+    </div>
+</div>
+
+<div class="analysis-section">
+    <h3>Análisis Riesgo-Beneficio</h3>
+    <p>Categoría de riesgo: {{ analisis_riesgo.categoria_riesgo }}</p>
+    <p>Confiabilidad del Modelo: {{ prediccion.confiabilidad }}%</p>
+    <p>Recomendación: {{ analisis.recomendacion }}</p>
+</div>
+
+<div class="analysis-section">
+    <h3>Alternativas en la Región</h3>
+    {% if alternativas_region %}
+    <table>
+        <thead><tr><th>Especie</th><th>ROI Promedio</th><th>Predicciones</th></tr></thead>
+        <tbody>
+        {% for alt in alternativas_region %}
+        <tr>
+            <td>{{ alt.tipo_arbol__tipo|capfirst }}</td>
+            <td>{{ alt.promedio_roi|floatformat:1 }}%</td>
+            <td>{{ alt.total_predicciones }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay datos comparativos disponibles.</p>
+    {% endif %}
+</div>
+
+<div class="analysis-section">
+    <h3>Especie en Otras Regiones</h3>
+    {% if misma_especie_otras_regiones %}
+    <table>
+        <thead><tr><th>Región</th><th>ROI Promedio</th><th>Producción Promedio</th></tr></thead>
+        <tbody>
+        {% for r in misma_especie_otras_regiones %}
+        <tr>
+            <td>{{ r.comuna__region__nombre }}</td>
+            <td>{{ r.promedio_roi|floatformat:1 }}%</td>
+            <td>{{ r.promedio_produccion|floatformat:2 }} ton/ha</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay datos de esta especie en otras regiones.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

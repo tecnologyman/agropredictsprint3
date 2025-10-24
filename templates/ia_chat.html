@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Asistente IA{% endblock %}
+
+{% block content %}
+<style>
+  /* ===== Estilos aislados del chat (prefijo ia-) ===== */
+  .ia-wrap { display:flex; flex-direction:column; gap:16px; }
+  .ia-card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; overflow:hidden; }
+  .ia-header { padding:12px 16px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; gap:10px; }
+  .ia-badge { margin-left:auto; font-size:12px; background:#e9f0ff; color:#2563eb; padding:2px 8px; border-radius:999px; }
+  .ia-msgs { height:60vh; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .ia-bubble { padding:10px 12px; border-radius:12px; white-space:pre-wrap; max-width:78%; border:1px solid #e5e7eb; }
+  .ia-bubble.ia { align-self:flex-start; background:#f5f6fa; }
+  .ia-bubble.user { align-self:flex-end; background:#e9f0ff; border:none; }
+  .ia-alert { padding:8px 16px; font-size:13px; display:none; }
+  .ia-alert.ok { color:#16a34a; display:block; }
+  .ia-alert.err { color:#dc2626; display:block; }
+  .ia-composer { display:flex; gap:8px; padding:12px; border-top:1px solid #e5e7eb; }
+  .ia-input { flex:1; padding:12px; border:1px solid #e5e7eb; border-radius:10px; }
+  .ia-btn { padding:0 16px; min-width:110px; border:none; border-radius:10px; background:#2563eb; color:#fff; font-weight:600; cursor:pointer; }
+  .ia-typing { align-self:flex-start; background:#f5f6fa; border:1px solid #e5e7eb; padding:10px 12px; border-radius:12px; font-size:13px; color:#6b7280; }
+</style>
+
+<div class="page-header">
+  <h2>🤖 Asistente IA</h2>
+  <p class="text-muted">Haz tus consultas al asistente directamente desde aquí.</p>
+</div>
+
+<div class="ia-wrap">
+  <div class="ia-card">
+    <div class="ia-header">
+      <strong>Asistente IA</strong>
+      <span class="ia-badge">BETA</span>
+    </div>
+
+    <div id="ia-msgs" class="ia-msgs">
+      <div class="ia-bubble ia">
+        ¡Hola! 👋 Soy tu asistente IA. ¿En qué te puedo ayudar hoy?
+        <div style="font-size:12px; color:#6b7280; margin-top:6px;">IA • listo</div>
+      </div>
+    </div>
+
+    <div id="ia-alert" class="ia-alert"></div>
+
+    <div class="ia-composer">
+      <input id="ia-q" type="text" class="ia-input" placeholder="Escribe tu pregunta… (Enter para enviar)" autocomplete="off">
+      <button id="ia-send" type="button" class="ia-btn">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Elementos
+  const msgs  = document.getElementById("ia-msgs");
+  const input = document.getElementById("ia-q");
+  const send  = document.getElementById("ia-send");
+  const alert = document.getElementById("ia-alert");
+
+  // Helpers UI
+  function addBubble(text, who){
+    const div = document.createElement("div");
+    div.className = "ia-bubble " + (who || "ia");
+    div.textContent = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+  function setAlert(text, type){ // "ok" | "err" | ""
+    alert.className = "ia-alert" + (type ? " " + type : "");
+    alert.textContent = text || "";
+    alert.style.display = text ? "block" : "none";
+  }
+  let typingEl = null;
+  function typing(show){
+    if (show){
+      if (typingEl) return;
+      typingEl = document.createElement("div");
+      typingEl.className = "ia-typing";
+      typingEl.textContent = "La IA está escribiendo…";
+      msgs.appendChild(typingEl);
+      msgs.scrollTop = msgs.scrollHeight;
+    } else if (typingEl){
+      typingEl.remove();
+      typingEl = null;
+    }
+  }
+
+  // Acción principal
+  async function consultarIA(){
+    const q = (input.value || "").trim();
+    if (!q) return;
+
+    setAlert("", "");
+    addBubble(q, "user");
+    input.value = "";
+    send.disabled = true;
+    typing(true);
+
+    try {
+      const resp = await fetch("{% url 'ia_consulta' %}?q=" + encodeURIComponent(q), { credentials: "same-origin" });
+      const data = await resp.json();
+      typing(false);
+
+      if (!resp.ok) {
+        addBubble(data.error || "Ocurrió un error al consultar la IA.", "ia");
+        setAlert("Error: " + (data.error || resp.statusText), "err");
+      } else {
+        addBubble(data.respuesta || "Sin respuesta.", "ia");
+        setAlert("Listo ✓", "ok");
+      }
+    } catch (e) {
+      typing(false);
+      addBubble("No se pudo contactar a la IA. Revisa tu conexión.", "ia");
+      setAlert("Error de red: " + e, "err");
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
+  }
+
+  // Eventos
+  send.addEventListener("click", consultarIA);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") consultarIA(); });
+
+  // Enfocar al cargar
+  setTimeout(()=> input.focus(), 0);
+})();
+</script>
+{% endblock %}

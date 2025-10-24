@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Calculadora de Densidad de Siembra - AgroPredict{% endblock %}
+{% block content %}
+
+<style>
+.form-section {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.result-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+.comparison-bar {
+    height: 20px;
+    border-radius: 10px;
+    background: #e9ecef;
+    overflow: hidden;
+    position: relative;
+}
+.comparison-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+    background: #ffc107;
+}
+.formula-explanation {
+    background: #fff8e1;
+    border-left: 4px solid #ffc107;
+    padding: 15px;
+    margin: 20px 0;
+}
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a></li>
+                    <li class="breadcrumb-item active">Densidad de Siembra</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center mb-4">
+                <i class="fas fa-seedling text-warning me-3" style="font-size: 2.5rem;"></i>
+                <div>
+                    <h1 class="h3 mb-1">Calculadora de Densidad de Siembra</h1>
+                    <p class="text-muted mb-0">Determina la cantidad óptima de plantas a sembrar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Parámetros de Siembra -->
+                <div class="form-section">
+                    <h5 class="text-warning mb-3">
+                        <i class="fas fa-seedling me-2"></i>
+                        Parámetros de Siembra
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <label for="densidad_planta" class="form-label">Densidad Objetivo (plantas/ha)</label>
+                        <input type="number" class="form-control" name="densidad_planta" 
+                               id="densidad_planta" step="100" min="0" value="3000" required>
+                        <div class="form-text">Número de plantas vivas deseadas al final de la temporada</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="supervivencia" class="form-label">Tasa de Supervivencia Estimada</label>
+                        <select class="form-select" name="supervivencia" id="supervivencia">
+                            <option value="0.95">95% - Condiciones óptimas</option>
+                            <option value="0.90" selected>90% - Condiciones buenas</option>
+                            <option value="0.85">85% - Condiciones normales</option>
+                            <option value="0.80">80% - Condiciones regulares</option>
+                            <option value="0.75">75% - Condiciones difíciles</option>
+                            <option value="0.70">70% - Condiciones adversas</option>
+                        </select>
+                        <div class="form-text">Considera clima, tipo de suelo, calidad de semilla y manejo</div>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-warning btn-lg">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calcular Densidad de Siembra
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            {% if resultado %}
+            <div class="form-section">
+                <h5 class="text-warning mb-3">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Resultado del Cálculo
+                </h5>
+
+                <!-- Resultado Principal -->
+                <div class="result-card">
+                    <h6 class="text-warning mb-3">Plantas a Sembrar</h6>
+                    
+                    <div class="text-center mb-4">
+                        <div class="display-4 text-warning">{{ resultado.plantas_necesarias }}</div>
+                        <p class="text-muted">plantas/hectárea</p>
+                    </div>
+                    
+                    <div class="comparison-bar mb-2">
+                        <div class="comparison-fill" style="width: 100%"></div>
+                    </div>
+                    <small class="text-muted">Incluye margen de seguridad por tasa de supervivencia</small>
+                </div>
+
+                <!-- Análisis -->
+                <div class="result-card">
+                    <h6 class="text-warning mb-3">Análisis de Densidad</h6>
+                    
+                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                        <span>Densidad Objetivo:</span>
+                        <strong>{{ request.POST.densidad_planta }} plantas/ha</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                        <span>Tasa de Supervivencia:</span>
+                        <strong>{{ request.POST.supervivencia|floatformat:0 }}%</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <span>Margen de Seguridad:</span>
+                        <strong class="text-warning">{{ resultado.plantas_necesarias|add:"-3000" }} plantas adicionales</strong>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones -->
+                <div class="alert alert-warning">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Recomendaciones:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Ajustar según pruebas de germinación</li>
+                        <li>Considerar condiciones del predio</li>
+                        <li>Mantener semilla de reserva (5-10%)</li>
+                    </ul>
+                </div>
+            </div>
+            {% else %}
+            <!-- Información educativa -->
+            <div class="form-section">
+                <h5 class="text-warning mb-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Método de Cálculo
+                </h5>
+                
+                <div class="formula-explanation">
+                    <h6>Fórmula Base:</h6>
+                    <p><strong>Plantas a Sembrar = Densidad Objetivo / Tasa de Supervivencia</strong></p>
+                </div>
+                
+                <h6>Factores Considerados:</h6>
+                <ol>
+                    <li><strong>Densidad Objetivo:</strong> Número de plantas vivas deseadas al final de la temporada</li>
+                    <li><strong>Tasa de Supervivencia:</strong> Porcentaje estimado de plantas que sobrevivirán</li>
+                    <li><strong>Margen de Seguridad:</strong> Se siembran más plantas para compensar pérdidas</li>
+                </ol>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tip:</strong> Para cultivos de alto valor, considere tasas de supervivencia 
+                    conservadoras (75-85%) para asegurar la población objetivo.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

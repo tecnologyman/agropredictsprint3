@@ -1,0 +1,14 @@
+Django>=4.2,<5.0
+django-extensions>=3.2
+python-decouple>=3.8
+Pillow>=10.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+django-mathfilters>=1.0.0
+gunicorn
+whitenoise
+psycopg2-binary
+dj-database-url
+requests
+pandas
+openai

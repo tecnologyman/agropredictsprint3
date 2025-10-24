@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Calculadora de ROI Agrícola - AgroPredict{% endblock %}
+{% block content %}
+
+<style>
+.form-section {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.result-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+.metric-bar {
+    height: 20px;
+    border-radius: 10px;
+    background: #e9ecef;
+    overflow: hidden;
+    position: relative;
+}
+.metric-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+.metric-fill.success { background: #28a745; }
+.metric-fill.warning { background: #ffc107; }
+.metric-fill.danger { background: #dc3545; }
+.formula-explanation {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    padding: 15px;
+    margin: 20px 0;
+}
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a></li>
+                    <li class="breadcrumb-item active">ROI Agrícola</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center mb-4">
+                <i class="fas fa-chart-line text-success me-3" style="font-size: 2.5rem;"></i>
+                <div>
+                    <h1 class="h3 mb-1">Calculadora de ROI Agrícola</h1>
+                    <p class="text-muted mb-0">Calcula el retorno de inversión y tiempo de recuperación</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Datos de Inversión -->
+                <div class="form-section">
+                    <h5 class="text-success mb-3">
+                        <i class="fas fa-dollar-sign me-2"></i>
+                        Datos de Inversión
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <label for="inversion" class="form-label">Inversión Inicial (CLP)</label>
+                        <input type="number" class="form-control" name="inversion" id="inversion" 
+                               step="1" min="0" required placeholder="ej: 10000000">
+                        <div class="form-text">Costo total del proyecto (equipos, infraestructura, etc.)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="beneficio_anual" class="form-label">Beneficio Anual Neto (CLP)</label>
+                        <input type="number" class="form-control" name="beneficio_anual" 
+                               id="beneficio_anual" step="1" min="0" required placeholder="ej: 3000000">
+                        <div class="form-text">Ganancia neta anual esperada (ingresos - costos)</div>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calcular ROI
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            {% if resultado %}
+            <div class="form-section">
+                <h5 class="text-success mb-3">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Análisis Financiero
+                </h5>
+
+                <!-- Resultado ROI -->
+                <div class="result-card">
+                    <h6 class="text-success mb-3">Retorno de Inversión (ROI)</h6>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>ROI Anual</span>
+                            <span><strong>{{ resultado.roi }}%</strong></span>
+                        </div>
+                        <div class="metric-bar">
+                            {% if resultado.roi >= 50 %}
+                            <div class="metric-fill success" style="width: {% widthratio resultado.roi 100 100 %}%"></div>
+                            {% elif resultado.roi >= 20 %}
+                            <div class="metric-fill warning" style="width: {% widthratio resultado.roi 100 100 %}%"></div>
+                            {% else %}
+                            <div class="metric-fill danger" style="width: {% widthratio resultado.roi 100 100 %}%"></div>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">
+                            {% if resultado.roi >= 50 %}
+                            Excelente rentabilidad
+                            {% elif resultado.roi >= 20 %}
+                            Buena rentabilidad
+                            {% else %}
+                            Rentabilidad baja
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    {% if resultado.payback %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Periodo de Recuperación</span>
+                            <span><strong>{{ resultado.payback }} años</strong></span>
+                        </div>
+                        <small class="text-muted">Tiempo estimado para recuperar la inversión</small>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Interpretación -->
+                <div class="result-card">
+                    <h6 class="text-success mb-3">Interpretación</h6>
+                    {% if resultado.roi >= 50 %}
+                    <div class="alert alert-success mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Excelente Rentabilidad:</strong> Tu proyecto presenta un ROI muy favorable. 
+                        La inversión se recupera rápidamente.
+                    </div>
+                    {% elif resultado.roi >= 20 %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Buena Rentabilidad:</strong> El proyecto es rentable. 
+                        Considera optimizar costos operacionales para mejorar el ROI.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Rentabilidad Baja:</strong> Revisa los costos y evalúa estrategias 
+                        para aumentar los ingresos.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Información educativa -->
+            <div class="form-section">
+                <h5 class="text-success mb-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Método de Cálculo Financiero
+                </h5>
+                
+                <div class="formula-explanation">
+                    <h6>Fórmulas Base:</h6>
+                    <p class="mb-2"><strong>ROI = (Beneficio Anual / Inversión Inicial) × 100</strong></p>
+                    <p class="mb-0"><strong>Payback = Inversión Inicial / Beneficio Anual</strong></p>
+                </div>
+                
+                <h6>Interpretación:</h6>
+                <ul>
+                    <li><strong>ROI > 50%:</strong> Excelente rentabilidad</li>
+                    <li><strong>ROI 20-50%:</strong> Buena rentabilidad</li>
+                    <li><strong>ROI < 20%:</strong> Rentabilidad baja</li>
+                </ul>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Nota:</strong> Este cálculo no considera valor del dinero en el tiempo (VPN) 
+                    ni tasas de descuento. Para análisis financiero completo, consulte con un especialista.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

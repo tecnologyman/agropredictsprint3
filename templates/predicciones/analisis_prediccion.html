@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Análisis de Predicción - AgroPredict{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Análisis de Predicción</h2>
+    <p>Análisis detallado de rentabilidad e inversión para toma de decisiones</p>
+</div>
+
+<div class="prediction-layout">
+    <!-- Formulario de selección -->
+    <div class="form-section">
+        <h3>Seleccionar Predicción para Analizar</h3>
+        
+        <form method="post" class="prediction-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.prediccion.id_for_label }}">
+                    {{ form.prediccion.label }}
+                </label>
+                {{ form.prediccion }}
+                {% if form.prediccion.help_text %}
+                    <small class="form-help">{{ form.prediccion.help_text }}</small>
+                {% endif %}
+                {% if form.prediccion.errors %}
+                    <div class="form-errors">
+                        {{ form.prediccion.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--lg">
+                    Analizar Predicción
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Panel informativo -->
+    <div class="form-section">
+        <h3>¿Qué incluye el análisis?</h3>
+        
+        <div class="card">
+            <div class="card__body">
+                <h4>📊 Análisis de Rentabilidad</h4>
+                <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                    <li><strong>ROI proyectado:</strong> Retorno sobre inversión a 5 años</li>
+                    <li><strong>Tiempo de recuperación:</strong> Cuándo recuperará su inversión</li>
+                    <li><strong>Flujo de caja:</strong> Proyección de ingresos y costos</li>
+                    <li><strong>Análisis de riesgo:</strong> Evaluación de factores de riesgo</li>
+                </ul>
+                
+                <h4>🌱 Comparación de Alternativas</h4>
+                <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                    <li><strong>Misma especie:</strong> Rendimiento en otras regiones</li>
+                    <li><strong>Otras especies:</strong> Alternativas más rentables</li>
+                    <li><strong>Eficiencia de recursos:</strong> Agua y tierra</li>
+                    <li><strong>Factores climáticos:</strong> Adaptabilidad regional</li>
+                </ul>
+                
+                <h4>💡 Recomendaciones</h4>
+                <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                    <li><strong>Decisión de inversión:</strong> Proceder o evaluar alternativas</li>
+                    <li><strong>Optimizaciones:</strong> Mejoras en manejo y tecnología</li>
+                    <li><strong>Diversificación:</strong> Estrategias de reducción de riesgo</li>
+                    <li><strong>Timing:</strong> Mejor momento para iniciar el proyecto</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Predicciones disponibles -->
+{% if predicciones_disponibles %}
+<div class="predictions-section">
+    <h3>Predicciones Disponibles para Análisis</h3>
+    
+    <div class="predictions-list">
+        {% for prediccion in predicciones_disponibles %}
+            <div class="prediction-item clickable" onclick="window.location.href='{% url 'analisis_prediccion_detalle' prediccion.pk %}'">
+                <div class="prediction-header">
+                    <h4 class="prediction-title">{{ prediccion.tipo_arbol }}</h4>
+                    <span class="prediction-date">{{ prediccion.fecha_creacion|date:"d/m/Y" }}</span>
+                </div>
+                <div class="prediction-location">
+                    {{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}
+                </div>
+                <div class="prediction-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Hectáreas</span>
+                        <span class="stat-value">{{ prediccion.hectareas|floatformat:1 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Producción</span>
+                        <span class="stat-value">{{ prediccion.produccion_total|floatformat:2 }} ton</span>
+                    </div>
+                    {% if prediccion.roi_proyectado %}
+                        <div class="stat-item">
+                            <span class="stat-label">ROI Proyectado</span>
+                            <span class="stat-value roi-value {% if prediccion.roi_proyectado >= 30 %}high-roi{% elif prediccion.roi_proyectado >= 15 %}medium-roi{% else %}low-roi{% endif %}">
+                                {{ prediccion.roi_proyectado|floatformat:1 }}%
+                            </span>
+                        </div>
+                    {% endif %}
+                    {% if prediccion.inversion_estimada %}
+                        <div class="stat-item">
+                            <span class="stat-label">Inversión</span>
+                            <span class="stat-value">${{ prediccion.inversion_estimada|floatformat:0 }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="stat-item">
+                        <span class="stat-label">Acción</span>
+                        <a href="{% url 'analisis_prediccion_detalle' prediccion.pk %}" class="btn btn--sm btn--primary">Analizar</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.prediction-item.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prediction-item.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-errors {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-4);
+}
+
+.form-help {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-4);
+    display: block;
+}
+</style>
+{% endblock %}
