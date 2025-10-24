@@ -203,4 +203,108 @@
         </form>
     </div>
 </div>
+
+<style>
+/* ==========================================================
+   ESTILO CLARO – DETALLE DE PREDICCIÓN (VERSIÓN FINAL)
+   ========================================================== */
+
+/* Estructura general */
+.prediction-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Paneles principales */
+.form-section,
+.results-section {
+  background: #ffffff !important;
+  border: 1px solid #eaeaea !important;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  color: #222 !important;
+}
+
+/* Tarjetas y bloques dentro de los paneles */
+.results-section .card,
+.results-section .card__body,
+.form-section .card,
+.analysis-section,
+.recommendation-section {
+  background: #fafafa !important;
+  border: 1px solid #eaeaea !important;
+  border-radius: 12px;
+  box-shadow: none !important;
+  padding: 1.5rem;
+  color: #222 !important;
+}
+
+/* Títulos */
+h2, h3, h4, h5 {
+  color: #222 !important;
+}
+
+/* Subtítulos y texto */
+p, li, small, span {
+  color: #444 !important;
+}
+
+/* Métricas */
+.metric-card {
+  background: #ffffff !important;
+  border: 1px solid #eaeaea !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  text-align: center;
+  color: #222 !important;
+}
+
+.metric-value {
+  font-weight: 600;
+  color: #222 !important;
+}
+
+/* Recomendaciones */
+.recommendation-card,
+.recommendation-section {
+  background: #f9f9ff !important;
+  border: 1px solid #dcdcff !important;
+  border-left: 4px solid #7b65f2 !important;
+  border-radius: 12px;
+  padding: 1.2rem;
+  color: #333 !important;
+}
+
+/* Botones */
+.btn--primary {
+  background: linear-gradient(135deg, #4f6ef7, #a66bff) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn--primary:hover {
+  background: linear-gradient(135deg, #5d7bff, #b17fff) !important;
+  transform: translateY(-2px);
+}
+
+.btn--secondary {
+  background: #f7f7f7 !important;
+  border: 1px solid #ccc !important;
+  color: #222 !important;
+}
+
+.btn--secondary:hover {
+  background: #ededed !important;
+}
+</style>
+
+
+
 {% endblock %}

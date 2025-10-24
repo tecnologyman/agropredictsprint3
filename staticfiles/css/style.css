@@ -2639,3 +2639,82 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   background: #e5e9ff !important;
   color: #4050c5 !important;
 }
+
+.result-section,
+.prediction-results,
+.prediction-detail,
+.prediccion-detalle,
+.analysis-section,
+.card,
+.metric-container {
+  background: #ffffff !important;
+  border: 1px solid #eaeaea !important;
+  border-radius: 14px !important;
+  color: #222 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  padding: 1.5rem !important;
+}
+
+/* Paneles secundarios dentro de resultados */
+.result-section .card,
+.prediction-results .card,
+.analysis-section .card {
+  background: #fafafa !important;
+  border: 1px solid #eaeaea !important;
+  color: #222 !important;
+  box-shadow: none !important;
+}
+
+/* Títulos */
+h2, h3, h4, h5 {
+  color: #222 !important;
+}
+
+/* Textos secundarios */
+p, span, small, li {
+  color: #444 !important;
+}
+
+/* Métricas o cuadros de datos */
+.metric-box, .metric {
+  background: #fff !important;
+  border: 1px solid #eaeaea !important;
+  border-radius: 10px;
+  padding: 1rem;
+  color: #222 !important;
+}
+
+/* Recomendaciones */
+.recommendation-card,
+.recommendation-section {
+  background: #f9f9ff !important;
+  border: 1px solid #ddd !important;
+  border-left: 4px solid #7b65f2 !important;
+  border-radius: 10px;
+  padding: 1rem;
+  color: #222 !important;
+}
+
+/* Botones consistentes */
+.btn--primary {
+  background: linear-gradient(135deg, #4f6ef7, #a66bff) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+}
+
+.btn--primary:hover {
+  background: linear-gradient(135deg, #5d7bff, #b17fff) !important;
+  transform: translateY(-2px);
+}
+
+.btn--secondary {
+  background: #f7f7f7 !important;
+  border: 1px solid #ccc !important;
+  color: #222 !important;
+}
+
+.btn--secondary:hover {
+  background: #ededed !important;
+}
