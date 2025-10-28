@@ -24,6 +24,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://sprint3.agropredict.tecnologyman.cl',
+    'https://fdsw.agropredict.tecnologyman.cl',
     'https://*.up.railway.app',
 ]
 
