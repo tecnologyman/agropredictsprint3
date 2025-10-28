@@ -14,8 +14,7 @@ load_dotenv(BASE_DIR / '.env')
 # SEGURIDAD
 # -------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production-agropredict-2024')
-#DEBUG = os.getenv('DEBUG', 'False') == 'True'
-DEBUG = True
+DEBUG = True  # For demo purposes
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
@@ -33,7 +32,7 @@ CSRF_TRUSTED_ORIGINS = [
 # -------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
+    'django.contrib.auth',  # Mantenerla, aunque no haya login
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -46,10 +45,11 @@ INSTALLED_APPS = [
 # -------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ← Whitenoise para estáticos
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Archivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    # ⚠️ Puedes comentar la siguiente línea si no usas request.user en templates:
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -73,7 +73,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
+                'django.contrib.auth.context_processors.auth',  # OK aunque no haya login
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -93,12 +93,7 @@ DATABASES = {
 # -------------------------------
 # VALIDACIÓN DE CONTRASEÑAS
 # -------------------------------
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+AUTH_PASSWORD_VALIDATORS = []  # Desactivadas para demo
 
 # -------------------------------
 # INTERNACIONALIZACIÓN
@@ -120,7 +115,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # -------------------------------
-# ARCHIVOS LOG Y MENSAJES
+# LOGGING Y MENSAJES
 # -------------------------------
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
@@ -153,13 +148,14 @@ MESSAGE_TAGS = {
 }
 
 # -------------------------------
-# LOGIN / REDIRECCIONES
+# LOGIN / REDIRECCIONES (DESACTIVADO)
 # -------------------------------
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_URL = '/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 # -------------------------------
-# CONFIG PERSONALIZADA (mantienes lo tuyo)
+# CONFIG PERSONALIZADA
 # -------------------------------
 ACCUWEATHER_API_KEY = os.environ.get('ACCUWEATHER_API_KEY', 'demo_key')
 

@@ -12,45 +12,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
+
 <body>
     <div class="app-layout">
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <h1 class="logo">AgroPredict</h1>
-                {% if request.user.is_authenticated %}
-                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #ddd;">
-                        👤 {{ request.user.username }}
-                    </p>
-                {% endif %}
+                <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #ddd;">
+                    🌾 Modo Demo
+                </p>
             </div>
-            
+
             <div class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <span class="nav-icon">📊</span>
                     Dashboard
                 </a>
-                
+
                 <a href="{% url 'nueva_prediccion' %}" class="nav-item {% if request.resolver_match.url_name == 'nueva_prediccion' %}active{% endif %}">
                     <span class="nav-icon">➕</span>
                     Nueva Predicción
                 </a>
-                
+
                 <a href="{% url 'lista_predicciones' %}" class="nav-item {% if request.resolver_match.url_name == 'lista_predicciones' %}active{% endif %}">
                     <span class="nav-icon">📋</span>
                     Historial
                 </a>
-                
-                <!-- NUEVOS ELEMENTOS DEL MENÚ -->
+
                 <a href="{% url 'analisis_prediccion' %}" class="nav-item {% if 'analisis' in request.resolver_match.url_name %}active{% endif %}">
                     <span class="nav-icon">📈</span>
                     Análisis
                 </a>
-                
+
                 <a href="{% url 'comparacion_predicciones' %}" class="nav-item {% if request.resolver_match.url_name == 'comparacion_predicciones' %}active{% endif %}">
                     <span class="nav-icon">⚖️</span>
                     Comparar
                 </a>
+
                 <a href="{% url 'calculadoras_agricolas' %}" class="nav-item {% if 'calculadoras' in request.resolver_match.url_name %}active{% endif %}">
                     <span class="nav-icon">🧮</span>
                     Calculadoras
@@ -60,27 +59,17 @@
                     <span class="nav-icon">🤖</span>
                     Asistente IA
                 </a>
-          <!--       <a href="{% url 'ms_ping' %}"
-                    class="nav-item {% if request.resolver_match.url_name == 'ms_ping' %}active{% endif %}">
-                     <span class="nav-icon">🔌</span> Ping FastAPI
-                    </a>
-                    <a href="{% url 'ms_echo' %}?msg=Hola"
-                    class="nav-item {% if request.resolver_match.url_name == 'ms_echo' %}active{% endif %}">
-                    <span class="nav-icon">📤</span> Echo FastAPI
-                    </a>
-       
-                -->
-            
-        {% if request.user.is_authenticated %}
-                    <a href="{% url 'logout' %}" class="nav-item">
-                        <span class="nav-icon">🚪</span>
-                        Cerrar sesión
-                    </a>
-                {% endif %}
             </div>
         </nav>
+
         <!-- Main Content -->
         <main class="main-content">
+
+            <!-- Aviso de modo demo -->
+            <div class="alert alert-info text-center py-2 mb-3" style="font-size: 0.9rem;">
+                🔓 Modo Demo: todas las funciones están habilitadas sin inicio de sesión.
+            </div>
+
             <!-- Messages -->
             {% if messages %}
                 {% for message in messages %}
@@ -106,12 +95,11 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
-        
+
         // Función para actualizar select de comunas
         function actualizarComunas(regionId, comunaSelectId) {
             const comunaSelect = document.getElementById(comunaSelectId);
             if (!comunaSelect) return;
-            
             fetch(`/api/comunas/?region_id=${regionId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -126,7 +114,7 @@
                 .catch(error => console.error('Error:', error));
         }
     </script>
-    
+
     {% block extra_js %}
     {% endblock %}
 </body>
