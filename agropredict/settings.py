@@ -19,7 +19,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'sprint3.agropredict.tecnologyman.cl',
-    'https://fdsw.agropredict.tecnologyman.cl',
+    'fdsw.agropredict.tecnologyman.cl',
     '.up.railway.app',
 ]
 
